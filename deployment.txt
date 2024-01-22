@@ -1,0 +1,11 @@
+# build
+npm run build
+
+# add build
+git add dist -f
+
+#commit build
+git commit -m ""
+
+#push build to subtree
+git subtree push --prefix dist origin deploy
