@@ -1,32 +1,25 @@
 <template>
     <div class="home">
-        <!-- <div class="center pad"><h1>home page</h1></div>
-        <div class="center pad"><h2>click start button to record</h2></div>
+        <div class="center pad" id="isRecording"><h2>{{ recordState }}</h2></div>
         <div class="center pad">
-            <button @click="startRecording" v-if="start">start</button>
-            <button @click="stopRecording" v-if="stop">stop</button>
+            <button id="startRecording" @click="initFunction">Start</button>
+            <button id="stopRecording">Stop</button>
         </div>
-        <div class="center pad"><audio src="" controls ></audio></div>
-        <div class="center pad"><button @click="goadmin">go admin</button></div>
-
+        <!-- <div class="center pad"><button @click="goadmin">go admin</button></div> -->
+        
+        <br />
         <div class="record">
             <div class="center pad">
                 <h3>recorded audio</h3>
             </div>
             <div class="center pad">
                 <div class="center pad">
-                    <audio src="" controls ></audio>
+                    <audio src="" id="audioElement" controls></audio>
                     <button style="margin: 0.5rem 1rem;">Delete</button>
                 </div>
                 
             </div>
-        </div> -->
-        <button id="startRecording" @click="initFunction">Start</button>
-        <button id="stopRecording">Stop</button>
-        <br />
-        <p id="isRecording">{{ recordState }}</p>
-        <audio src="" id="audioElement" controls></audio>
-
+        </div>
     </div>
 </template>
 
