@@ -1,26 +1,31 @@
 <template >
-  <div>
+  <div class="center">
     <div style="max-width: 28em">
+      <div >
+        <p>Record the text below:</p>
+        <div class="center"><h1 style="font-size: 100px;">Text</h1></div>
+      </div>
+      <p v-if="stopButton">Click play button to <strong style="font-weight:bold; font-size:20px;color: white;" >Record</strong> listening</p>
+      <p v-if="recordButton">Recording...</p>
       <div id="controls">
         <button
           id="recordButton"
           @click="startRecording"
           :disabled="recordButton"
+          style="width: 200px; height: 40px;"
         >
           Record
         </button>
-        <button id="stopButton" :disabled="stopButton" @click="stopRecording">
+        <button id="stopButton" :disabled="stopButton" @click="stopRecording" style="width: 200px; height: 40px;">
           Stop
         </button>
       </div>
-      <pre>Log</pre>
-      <pre id="log"></pre>
-
-      <pre>Recordings</pre>
+      
+      <h2 style="margin-top: 20px;">Recordings</h2>
       <ol id="recordingsList"></ol>
       <li v-for="audio in audioList" :key="audio">
-        <audio :src="audio" controls></audio>
-        <link :href="audio" :download="audioName" />{{ audioName }}
+        <audio :src="audio.url" controls></audio>
+        <a :href="audio.url" :download="audio.audioName">download link: {{  audio.audioName }}</a>
       </li>
     </div>
   </div>
@@ -45,10 +50,10 @@ const audioList = reactive([]);
 const recordButton = ref(false);
 const stopButton = ref(true);
 
-var encodingType = "mp3";
+var encodingType = "wav";
 var encodeAfterRecord = true;
 
-const startRecording = async () => {
+const startRecording = () => {
   console.log("startRecording() called");
 
   // We'll us a simple constraints object, for more advanced features see https://blog.addpipe.com/audio-constraints-getusermedia/
@@ -58,12 +63,9 @@ const startRecording = async () => {
   };
 
   /* We're using the standard promise based getUserMedia() https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia */
-  await navigator.mediaDevices
+  navigator.mediaDevices
     .getUserMedia(constraints)
     .then(function (stream) {
-      __log(
-        "getUserMedia() success, stream created, initializing WebAudioRecorder..."
-      );
 
       //assign to gumStream for later use
       gumStream = stream;
@@ -81,16 +83,16 @@ const startRecording = async () => {
         numChannels: 2,
         onEncoderLoading: async function (recorder, encoding) {
           // show "loading encoder..." display
-          __log("Loading " + encoding + " encoder...");
+          // __log("Loading " + encoding + " encoder...");
         },
         onEncoderLoaded: async function (recorder, encoding) {
           // hide "loading encoder..." display
-          __log(encoding + " encoder loaded");
+          // __log(encoding + " encoder loaded");
         },
       });
 
       recorder.onComplete = function (recorder, blob) {
-        __log("Encoding complete");
+        // __log("Encoding complete");
         createDownloadLink(blob, recorder.encoding);
       };
       recorder.setOptions({
@@ -105,7 +107,7 @@ const startRecording = async () => {
       });
       //start the recording process
       recorder.startRecording();
-      __log("Recording started");
+      // __log("Recording started");
     })
     .catch(function (err) {
       //enable the record button if getUSerMedia() fails
@@ -119,8 +121,6 @@ const startRecording = async () => {
 };
 
 const stopRecording = () => {
-  console.log("stopRecording() called");
-
   //stop microphone access
   gumStream.getAudioTracks()[0].stop();
 
@@ -130,15 +130,13 @@ const stopRecording = () => {
 
   //tell the recorder to finish the recording (stop recording + encode the recorded audio)
   recorder.finishRecording();
-
-  __log("Recording stopped");
+  // __log("Recording stopped");
 };
 
 const createDownloadLink = (blob, encoding) => {
-  __log("save call");
   var url = URL.createObjectURL(blob);
   var audioName = new Date().toISOString() + "." + encoding;
-  audioList.push({
+  audioList.unshift({
     url: url,
     audioName: audioName,
   });
@@ -150,29 +148,9 @@ const __log = (e, data) => {
 };
 </script>
 <style scoped>
-h1 {
-  text-decoration: underline red;
-  text-decoration-thickness: 3px;
-  text-underline-offset: 6px;
-  font-size: 220%;
-  font-weight: bold;
-}
-
-h2 {
-  font-weight: bold;
-  color: #005a9c;
-  font-size: 140%;
-  text-transform: uppercase;
-}
 
 p {
   margin: 1em 0;
-}
-
-pre {
-  padding: 0px;
-  border: 0px;
-  border-radius: 0px;
 }
 
 red {
