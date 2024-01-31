@@ -2,11 +2,12 @@
   <div class="center">
     <div style="max-width: 28em">
       <div >
-        <p>Record the text below:</p>
+        <p>Read out the text below:</p>
         <div class="center"><h1 style="font-size: 100px;">Text</h1></div>
       </div>
-      <p v-if="stopButton">Click play button to <strong style="font-weight:bold; font-size:20px;color: white;" >Record</strong> listening</p>
-      <p v-if="recordButton">Recording...</p>
+      <p v-if="stopButton">Click <strong style="font-weight:bold; font-size:20px;color: white;" >Record</strong> button to start recording</p>
+      <p v-if="recordButton">Recording . . . </p>  
+      <p v-if="recordButton">Click <strong style="font-weight:bold; font-size:20px;color: white;" >Stop</strong> button to stop recording</p>
       <div id="controls">
         <button
           id="recordButton"
