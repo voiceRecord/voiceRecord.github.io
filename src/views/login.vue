@@ -4,10 +4,12 @@
       <div class="center pad">
         <input type="text" placeholder="neptun ID" v-model="id"/>
       </div>
-      <div class="center pad"><input type="text" placeholder="password" v-model="password"/></div>
+      <div class="center pad" ><input type="password" placeholder="password" v-model="password"/></div>
+
       <div class="center pad"><button @click="login">login</button></div>
-      <div>{{ id }}</div>
-      <div>{{ password }}</div>
+
+      <div class="center pad" v-if="wrongpassword"><p>wrong password please try again</p></div>
+      <div class="center pad"  v-if="wrongpassword"><p>(make sure neptun code is in capital letter)</p></div>
     </div>
 </template>
 
@@ -15,37 +17,31 @@
 import router from "@/router";
 import db from "@/firebase/firebase";
 
-import { ref ,onMounted , defineModel} from "vue";
+import { ref ,onMounted , defineModel, reactive} from "vue";
 
 import { doc,collection, query, where, getDocs } from "firebase/firestore";
 
-const q = query(collection(db, "cities"), where("capital", "==", true));
-
+const wrongpassword = ref(false)
 const user = ref(null)
 const id = defineModel("id")
 const password = defineModel("password")
 
-const login = () => {
-  const q = query(collection(db,"user"),where("neptun","==","S98PBH"),where("password","==","S98PBHS98PBH"));
-  
-  router.push("/home");
-};
 
-
-onMounted(async () =>{
-  
-
+const login = async () => {
+  const q = query(collection(db,"user"),where("neptun","==",id.value),where("password","==",password.value));
   await getDocs(q).then(res =>{
-    user.value = res.docs[0].data();
     console.log(res)
     if (res.empty) {
       // res.empty() is true
       console.log("No such document!");
+      wrongpassword.value = true;
     } else {
+      user.value = res.docs[0].data();
       console.log("Document data:", res.docs[0].data());
+      router.push("/audio");
     }
   })
-})
+};
 
 </script>
 <style scoped>
