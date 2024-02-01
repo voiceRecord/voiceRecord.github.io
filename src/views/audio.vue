@@ -2,12 +2,13 @@
   <div class="center">
     <div style="max-width: 28em">
       <div >
+        <h3>Welcomeback   <strong class="white-bold" >{{neptun}}</strong></h3>
         <p>Read out the text below:</p>
         <div class="center"><h1 style="font-size: 100px;">Text</h1></div>
       </div>
-      <p v-if="stopButton">Click <strong style="font-weight:bold; font-size:20px;color: white;" >Record</strong> button to start recording</p>
+      <p v-if="stopButton">Click <strong class="white-bold" >Record</strong> button to start recording</p>
       <p v-if="recordButton">Recording . . . </p>  
-      <p v-if="recordButton">Click <strong style="font-weight:bold; font-size:20px;color: white;" >Stop</strong> button to stop recording</p>
+      <p v-if="recordButton">Click <strong class="white-bold">Stop</strong> button to stop recording</p>
       <div id="controls">
         <button
           id="recordButton"
@@ -34,6 +35,15 @@
 
 
 <script setup>
+import {onMounted,reactive,ref} from "vue"
+const neptun = ref(sessionStorage.getItem("neptun"))
+
+onMounted(() => {
+  if(!neptun){
+    router.push("/");
+  }
+})
+
 //webkitURL is deprecated but nevertheless
 URL = window.URL || window.webkitURL;
 
@@ -45,7 +55,7 @@ var input; //MediaStreamAudioSourceNode  we'll be recording
 // shim for AudioContext when it's not avb.
 var AudioContext = window.AudioContext || window.webkitAudioContext;
 
-import { reactive, ref } from "vue";
+
 const audioList = reactive([]);
 
 const recordButton = ref(false);
@@ -149,7 +159,11 @@ const __log = (e, data) => {
 };
 </script>
 <style scoped>
-
+.white-bold{
+  font-weight:bold; 
+  font-size:20px;
+  color: white;
+}
 p {
   margin: 1em 0;
 }

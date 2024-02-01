@@ -16,13 +16,17 @@
 <script setup>
 import router from "@/router";
 import db from "@/firebase/firebase";
+import { ref  , defineModel, onMounted} from "vue";
+import {collection, query, where, getDocs } from "firebase/firestore";
 
-import { ref ,onMounted , defineModel, reactive} from "vue";
-
-import { doc,collection, query, where, getDocs } from "firebase/firestore";
+onMounted(() => {
+  var neptun = sessionStorage.getItem("neptun")
+  if(neptun){
+    router.push("/audio");
+  }
+})
 
 const wrongpassword = ref(false)
-const user = ref(null)
 const id = defineModel("id")
 const password = defineModel("password")
 
@@ -30,14 +34,13 @@ const password = defineModel("password")
 const login = async () => {
   const q = query(collection(db,"user"),where("neptun","==",id.value),where("password","==",password.value));
   await getDocs(q).then(res =>{
-    console.log(res)
     if (res.empty) {
       // res.empty() is true
       console.log("No such document!");
       wrongpassword.value = true;
     } else {
-      user.value = res.docs[0].data();
-      console.log("Document data:", res.docs[0].data());
+      const user = res.docs[0].data();
+      sessionStorage.setItem('neptun',user.neptun);//auto clear when close browser
       router.push("/audio");
     }
   })
