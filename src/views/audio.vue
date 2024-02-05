@@ -4,7 +4,7 @@
       <div >
         <h3>Welcomeback   <strong class="white-bold" >{{neptun}}</strong></h3>
         <p>Read out the text below:</p>
-        <div class="center"><h1 style="font-size: 100px;">Text</h1></div>
+        <div class="center"><h1 style="font-size: 70px;">{{textToRead}}</h1></div>
       </div>
       <p v-if="stopButton">Click <strong class="white-bold" >Record</strong> button to start recording</p>
       <p v-if="recordButton">Recording . . . </p>  
@@ -27,7 +27,7 @@
       <ol id="recordingsList"></ol>
       <li v-for="audio in audioList" :key="audio">
         <audio :src="audio.url" controls></audio>
-        <a :href="audio.url" :download="audio.audioName">download link: {{  audio.audioName }}</a>
+        <p>download link: <a :href="audio.url" :download="audio.audioName">{{  audio.audioName }}</a></p>
       </li>
     </div>
   </div>
@@ -36,13 +36,28 @@
 
 <script setup>
 import {onMounted,reactive,ref} from "vue"
+import axios from 'axios';
+
 const neptun = ref(sessionStorage.getItem("neptun"))
 
 onMounted(() => {
   if(!neptun){
     router.push("/");
   }
+  readText()
 })
+const filePath = "../../textdataset/data.txt"
+const textToRead = ref(null)
+var content = null
+var currentText = 0
+
+const readText = ()=>{
+  axios.get(filePath)
+  .then(res=>{
+    content = res.data;
+    textToRead.value = content.split('\n')[currentText]
+  })
+}
 
 //webkitURL is deprecated but nevertheless
 URL = window.URL || window.webkitURL;
@@ -146,11 +161,13 @@ const stopRecording = () => {
 
 const createDownloadLink = (blob, encoding) => {
   var url = URL.createObjectURL(blob);
-  var audioName = new Date().toISOString() + "." + encoding;
+  var audioName = (neptun.value + "_" + textToRead.value + "_"+ new Date().valueOf() + ".").replace(/\s/g, "") + encoding;
   audioList.unshift({
     url: url,
     audioName: audioName,
   });
+  currentText=currentText+1
+  textToRead.value = content.split('\n')[currentText]
 };
 
 //helper function
