@@ -26,7 +26,10 @@
       <h2 style="margin-top: 20px;">Recordings</h2>
       <ol id="recordingsList"></ol>
       <li v-for="audio in audioList" :key="audio">
-        <audio :src="audio.url" controls></audio>
+        <div class="center">
+          <audio :src="audio.url" controls></audio>
+          <button class="save" @click="saveRecord(audio)" :disabled="audio.disabled">Save record</button>
+        </div>
         <p>download link: <a :href="audio.url" :download="audio.audioName">{{  audio.audioName }}</a></p>
       </li>
     </div>
@@ -57,6 +60,12 @@ const readText = ()=>{
     content = res.data;
     textToRead.value = content.split('\n')[currentText]
   })
+}
+
+const saveRecord = (button) =>{
+  button.disabled = true;
+  currentText=currentText+1
+  textToRead.value = content.split('\n')[currentText]
 }
 
 //webkitURL is deprecated but nevertheless
@@ -166,8 +175,6 @@ const createDownloadLink = (blob, encoding) => {
     url: url,
     audioName: audioName,
   });
-  currentText=currentText+1
-  textToRead.value = content.split('\n')[currentText]
 };
 
 //helper function
@@ -176,6 +183,11 @@ const __log = (e, data) => {
 };
 </script>
 <style scoped>
+.save{
+  margin-left: 10px;
+  padding: 25px 10px;
+
+}
 .white-bold{
   font-weight:bold; 
   font-size:20px;
