@@ -15,7 +15,7 @@
 
 <script setup>
 import router from "@/router";
-import db from "@/firebase/firebase";
+import {db} from "@/firebase/firebase";
 import { ref  , defineModel, onMounted} from "vue";
 import {collection, query, where, getDocs } from "firebase/firestore";
 

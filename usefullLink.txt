@@ -1,3 +1,10 @@
 #deploy vue project with github
 
 https://www.youtube.com/watch?v=yo2bMGnIKE8&t=3s
+
+#upload audio to firebase with node.js
+
+https://lyleaf.medium.com/save-audio-to-google-cloud-storage-via-firebase-cloud-function-d95de37fdbf8
+
+https://vuefire.vuejs.org/guide/storage.html
+

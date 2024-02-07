@@ -28,9 +28,9 @@
       <li v-for="audio in audioList" :key="audio">
         <div class="center">
           <audio :src="audio.url" controls></audio>
-          <button class="save" @click="saveRecord(audio)" :disabled="audio.disabled">Save record</button>
+          <button class="save" @click="saveRecord(audio)" :disabled="audio.disabled">{{ saveState }}</button>
         </div>
-        <p>download link: <a :href="audio.url" :download="audio.audioName">{{  audio.audioName }}</a></p>
+        <!-- <p>download link: <a :href="audio.url" :download="audio.audioName">{{  audio.audioName }}</a></p> -->
       </li>
     </div>
   </div>
@@ -40,19 +40,25 @@
 <script setup>
 import {onMounted,reactive,ref} from "vue"
 import axios from 'axios';
+import {ref as storageRef, uploadBytes ,list} from 'firebase/storage'
+import {storage} from '@/firebase/firebase'
 
 const neptun = ref(sessionStorage.getItem("neptun"))
+const filePath = "../../textdataset/data.txt"
+const textToRead = ref(null)
+var content = null
+var currentText = 0
+const saveState = ref('Save')
+const saveAudios = ref(null)
+const audioList = reactive([]);
 
 onMounted(() => {
   if(!neptun){
     router.push("/");
   }
   readText()
+  ListSaveAudio()
 })
-const filePath = "../../textdataset/data.txt"
-const textToRead = ref(null)
-var content = null
-var currentText = 0
 
 const readText = ()=>{
   axios.get(filePath)
@@ -62,10 +68,48 @@ const readText = ()=>{
   })
 }
 
+const ListSaveAudio = async () =>{
+  const listRef = storageRef(storage, 'audio/'+neptun.value);
+  const audios = await list(listRef, { maxResults: 10 });
+
+  console.log(audios.items[0]._location)
+  // const fileName = filePath.split('/').pop();
+  // console.log('File Name:', fileName);
+
+  
+  
+}
+
+const listMorePage = async (saveAudios) =>{
+  if(saveAudios.nextPageToken){
+    const newAudio = await list(listRef, {
+      maxResults: 100,
+      pageToken: saveAudios.nextPageToken,
+    });
+    
+  }
+}
+
 const saveRecord = (button) =>{
-  button.disabled = true;
-  currentText=currentText+1
-  textToRead.value = content.split('\n')[currentText]
+  let text = "Do you want to save the record to database!\nEnter OK to confirm";
+  if (confirm(text) == true) {
+    button.disabled = true;
+    saveState.value = 'uploading...'
+    console.log(storage)
+    const fileRef = storageRef(
+      storage, 
+      'audio/'+neptun.value+'/'+button.audioName
+    );
+    uploadBytes(fileRef, button.blob)
+    .then((snapshot) => {
+      console.log(snapshot)
+      saveState.value = 'uploaded !'
+    });
+
+    currentText=currentText+1
+    textToRead.value = content.split('\n')[currentText]
+  }
+  
 }
 
 //webkitURL is deprecated but nevertheless
@@ -80,7 +124,7 @@ var input; //MediaStreamAudioSourceNode  we'll be recording
 var AudioContext = window.AudioContext || window.webkitAudioContext;
 
 
-const audioList = reactive([]);
+
 
 const recordButton = ref(false);
 const stopButton = ref(true);
@@ -174,6 +218,7 @@ const createDownloadLink = (blob, encoding) => {
   audioList.unshift({
     url: url,
     audioName: audioName,
+    blob:blob
   });
 };
 
@@ -185,7 +230,8 @@ const __log = (e, data) => {
 <style scoped>
 .save{
   margin-left: 10px;
-  padding: 25px 10px;
+  padding: 25px;
+  white-space: nowrap;
 
 }
 .white-bold{
