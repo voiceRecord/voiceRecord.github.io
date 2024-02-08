@@ -63,8 +63,25 @@ const readText = ()=>{
   axios.get(filePath)
   .then(res=>{
     content = res.data;
-    textToRead.value = content.split('\n')[currentText]
+    // make a hash to neptun ID so we can start word from begining or bottom of the list
+    let hash = 0;
+    let str = neptun.value
+    for (let i = 0; i < str.length; i++) {
+      const charCode = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + charCode; // Hashing algorithm
+      hash |= 0; // Convert to 32-bit integer
+    }
+    hash = Math.abs(hash)% 10;
+    content = content.split('\n')
+    if(hash%2==0){
+      //read from bottom to top
+      content.reverse()
+      textToRead.value = content[currentText]
+    }else{
+      textToRead.value = content[currentText]
+    }
   })
+
 }
 
 const ListSaveAudio = async () =>{
