@@ -22,8 +22,8 @@
           Stop
         </button>
       </div>
-      
-      <h2 style="margin-top: 20px;">Recordings</h2>
+      <h2 style="margin-top: 20px;">Recorded {{ currentText-1 }} words over {{ content.length }}</h2>
+      <h2 style="margin-top: 20px;">Recordings </h2>
       <ol id="recordingsList"></ol>
       <li v-for="audio in audioList" :key="audio">
         <div class="center">
@@ -48,7 +48,7 @@ import { doc, updateDoc } from "firebase/firestore";
 const neptun = ref(sessionStorage.getItem("neptun"))
 const filePath = "../../textdataset/data.txt"
 const textToRead = ref(null)
-var content = null
+var content = reactive([])
 var currentText = 0 + parseInt(sessionStorage.getItem("textComplete"))
 const audioList = reactive([]);
 
@@ -121,7 +121,7 @@ const listMorePage = async (saveAudios) =>{
 const saveRecord = (audio) =>{
   // save new or replace
   if(audio.audioTextNumber==currentText){
-    let text = "Do you want to save the record to database!\nEnter OK to confirm";
+    let text = "Do you want to save the record to database!\n Once save you cannot delete it\nEnter OK to confirm";
     if (confirm(text) == true) {
       audio.disabled = true;
       audio.saveState = 'uploading...'
@@ -131,10 +131,13 @@ const saveRecord = (audio) =>{
       );
       uploadBytes(fileRef, audio.blob)
       .then((snapshot) => {
-        console.log(snapshot)
+        audio.ref = snapshot.ref
         audio.saveState = 'uploaded !'
       });
-
+      if(currentText==content.length-1){
+        alert("you finish all the word! the next word will start over again")
+        currentText == 0
+      }
       currentText=currentText+1
       sessionStorage.setItem("textComplete",currentText)
       textToRead.value = content[currentText]
@@ -145,15 +148,54 @@ const saveRecord = (audio) =>{
     }
   }
   else{
-    console.log("work")
-    let text = "You already upload audio for the word"+audio.text+"\nDo you want to replace it?\nEnter OK to confirm";
+    let text = "You already upload audio for the word "+audio.text+"\nDo you want to replace it?\nEnter OK to confirm";
     if (confirm(text) == true) {
-      console.log("confirm")
+      //upload the audio
+      audio.disabled = true;
+      audio.saveState = 'uploading...'
+      const fileRef = storageRef(
+        storage, 
+        'audio/'+neptun.value+'/'+audio.audioName
+      );
+      uploadBytes(fileRef, audio.blob)
+      .then((snapshot) => {
+        audio.ref = snapshot.ref
+        audio.saveState = 'uploaded !'
+      });
+      
+      //get the uploaded audio and delete it from both local and server
+      audioList.forEach((audioInList)=>{
+        let audioName = audioInList.audioName.toString()
+        let text = audio.text.toString()
+
+        console.log(audioName+"\ " +text);
+        console.log(audioName.includes(text))
+        // if(audioInList.audioName.includes(audio.text)&&saveState=="uploaded !"){
+        //   deleteObject(audioInList.ref).then(()=>{
+        //     const index = audioList.indexOf(audioInList);
+        //     if (index !== -1) {
+        //       audioList.splice(index, 1);
+        //     }
+        //   })
+        // }
+      })
     }
   }
   
 }
-
+// const deleteRecord = (audio) =>{
+//   let text = "Do you want to delete the record from database!\nEnter OK to confirm";
+//   if (confirm(text) == true) {
+//     audio.deleteState = 'deleting...'
+//     deleteObject(audio.ref).then(()=>{
+//       audio.deleteState = 'deleted'
+//       const index = audioList.indexOf(audio);
+//       if (index !== -1) {
+//         audioList.splice(index, 1);
+//       }
+//     })
+//   }
+// }
 
 //webkitURL is deprecated but nevertheless
 URL = window.URL || window.webkitURL;
