@@ -29,7 +29,6 @@
         <div class="center">
           <audio :src="audio.url" controls></audio>
           <button class="save" @click="saveRecord(audio)" :disabled="audio.disabled">{{ audio.saveState }}</button>
-          <button class="save" @click="deleteRecord(audio)" :disabled="!audio.disabled">{{ audio.deleteState }}</button>
         </div>
         <p>download link: <a :href="audio.url" :download="audio.audioName">{{  audio.audioName }}</a></p>
       </li>
@@ -39,24 +38,28 @@
 
 
 <script setup>
+import router from "@/router";
 import {onMounted,reactive,ref} from "vue"
 import axios from 'axios';
-import {ref as storageRef, uploadBytes ,list,getDownloadURL,deleteObject } from 'firebase/storage'
-import {storage} from '@/firebase/firebase'
+import {ref as storageRef, uploadBytes ,list,getDownloadURL } from 'firebase/storage'
+import {storage,db} from '@/firebase/firebase'
+import { doc, updateDoc } from "firebase/firestore";
 
 const neptun = ref(sessionStorage.getItem("neptun"))
 const filePath = "../../textdataset/data.txt"
 const textToRead = ref(null)
 var content = null
-var currentText = 0
+var currentText = 0 + parseInt(sessionStorage.getItem("textComplete"))
 const audioList = reactive([]);
 
 onMounted(() => {
-  if(!neptun){
+  if(!neptun.value){
     router.push("/");
   }
-  readText()
-  ListSaveAudio()
+  else{
+    readText()
+    ListSaveAudio()
+  }
 })
 
 const readText = ()=>{
@@ -65,19 +68,22 @@ const readText = ()=>{
     content = res.data;
     // make a hash to neptun ID so we can start word from begining or bottom of the list
     let hash = 0;
-    let str = neptun.value
+    let str = neptun
     for (let i = 0; i < str.length; i++) {
       const charCode = str.charCodeAt(i);
       hash = ((hash << 5) - hash) + charCode; // Hashing algorithm
       hash |= 0; // Convert to 32-bit integer
     }
+    //only take last digit
     hash = Math.abs(hash)% 10;
+    //split the context string into object with multiple strings
     content = content.split('\n')
     if(hash%2==0){
       //read from bottom to top
       content.reverse()
       textToRead.value = content[currentText]
     }else{
+      //read normally
       textToRead.value = content[currentText]
     }
   })
@@ -97,7 +103,6 @@ const ListSaveAudio = async () =>{
         audioName: audioName,
         disabled: true,
         saveState: 'uploaded !',
-        deleteState: 'delete'
       });
     })
   })  
@@ -114,56 +119,52 @@ const listMorePage = async (saveAudios) =>{
 }
 
 const saveRecord = (audio) =>{
-  let text = "Do you want to save the record to database!\nEnter OK to confirm";
-  if (confirm(text) == true) {
-    audio.disabled = true;
-    audio.saveState = 'uploading...'
-    console.log(storage)
-    const fileRef = storageRef(
-      storage, 
-      'audio/'+neptun.value+'/'+audio.audioName
-    );
-    uploadBytes(fileRef, audio.blob)
-    .then((snapshot) => {
-      console.log(snapshot)
-      audio.saveState = 'uploaded !'
-    });
+  // save new or replace
+  if(audio.audioTextNumber==currentText){
+    let text = "Do you want to save the record to database!\nEnter OK to confirm";
+    if (confirm(text) == true) {
+      audio.disabled = true;
+      audio.saveState = 'uploading...'
+      const fileRef = storageRef(
+        storage, 
+        'audio/'+neptun.value+'/'+audio.audioName
+      );
+      uploadBytes(fileRef, audio.blob)
+      .then((snapshot) => {
+        console.log(snapshot)
+        audio.saveState = 'uploaded !'
+      });
 
-    currentText=currentText+1
-    textToRead.value = content.split('\n')[currentText]
+      currentText=currentText+1
+      sessionStorage.setItem("textComplete",currentText)
+      textToRead.value = content[currentText]
+      const userRef = doc(db, "user", neptun.value);
+      updateDoc(userRef, {
+        textComplete: currentText
+      });
+    }
+  }
+  else{
+    console.log("work")
+    let text = "You already upload audio for the word"+audio.text+"\nDo you want to replace it?\nEnter OK to confirm";
+    if (confirm(text) == true) {
+      console.log("confirm")
+    }
   }
   
 }
-const deleteRecord = (audio) =>{
-  let text = "Do you want to delete the record from database!\nEnter OK to confirm";
-  if (confirm(text) == true) {
-    audio.deleteState = 'deleting...'
-    deleteObject(audio.ref).then(()=>{
-      audio.deleteState = 'deleted'
-      const index = audioList.indexOf(audio);
-      if (index !== -1) {
-        audioList.splice(index, 1);
-      }
-    })
-  }
-}
+
+
 //webkitURL is deprecated but nevertheless
 URL = window.URL || window.webkitURL;
-
 var gumStream; //stream from getUserMedia()
 var recorder; //WebAudioRecorder object
 var input; //MediaStreamAudioSourceNode  we'll be recording
-
-
 // shim for AudioContext when it's not avb.
 var AudioContext = window.AudioContext || window.webkitAudioContext;
 
-
-
-
 const recordButton = ref(false);
 const stopButton = ref(true);
-
 var encodingType = "wav";
 var encodeAfterRecord = true;
 
@@ -196,17 +197,12 @@ const startRecording = () => {
         encoding: encodingType,
         numChannels: 2,
         onEncoderLoading: async function (recorder, encoding) {
-          // show "loading encoder..." display
-          // __log("Loading " + encoding + " encoder...");
         },
         onEncoderLoaded: async function (recorder, encoding) {
-          // hide "loading encoder..." display
-          // __log(encoding + " encoder loaded");
         },
       });
 
       recorder.onComplete = function (recorder, blob) {
-        // __log("Encoding complete");
         createDownloadLink(blob, recorder.encoding);
       };
       recorder.setOptions({
@@ -221,7 +217,6 @@ const startRecording = () => {
       });
       //start the recording process
       recorder.startRecording();
-      // __log("Recording started");
     })
     .catch(function (err) {
       //enable the record button if getUSerMedia() fails
@@ -244,26 +239,24 @@ const stopRecording = () => {
 
   //tell the recorder to finish the recording (stop recording + encode the recorded audio)
   recorder.finishRecording();
-  // __log("Recording stopped");
+
 };
 
 const createDownloadLink = (blob, encoding) => {
   var url = URL.createObjectURL(blob);
   var audioName = (neptun.value + "_" + textToRead.value + "_"+ new Date().valueOf() + ".").replace(/\s/g, "") + encoding;
   audioList.unshift({
+    text:textToRead.value,
     url: url,
     audioName: audioName,
     blob:blob,
     saveState: 'save',
     disabled:false,
-    deleteState:'delete'
+    audioTextNumber:currentText
   });
 };
 
-//helper function
-const __log = (e, data) => {
-  log.innerHTML += "\n" + e + " " + (data || "");
-};
+
 </script>
 <style scoped>
 .save{

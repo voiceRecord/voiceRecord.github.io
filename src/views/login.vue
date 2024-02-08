@@ -41,6 +41,13 @@ const login = async () => {
     } else {
       const user = res.docs[0].data();
       sessionStorage.setItem('neptun',user.neptun);//auto clear when close browser
+      if(user.textComplete){
+        sessionStorage.setItem('textComplete',user.textComplete);
+      }
+      else{
+        sessionStorage.setItem('textComplete',0);
+      }
+      
       router.push("/audio");
     }
   })
