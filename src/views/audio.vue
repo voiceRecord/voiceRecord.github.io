@@ -28,9 +28,10 @@
       <li v-for="audio in audioList" :key="audio">
         <div class="center">
           <audio :src="audio.url" controls></audio>
-          <button class="save" @click="saveRecord(audio)" :disabled="audio.disabled">{{ saveState }}</button>
+          <button class="save" @click="saveRecord(audio)" :disabled="audio.disabled">{{ audio.saveState }}</button>
+          <button class="save" @click="deleteRecord(audio)" :disabled="!audio.disabled">{{ audio.deleteState }}</button>
         </div>
-        <!-- <p>download link: <a :href="audio.url" :download="audio.audioName">{{  audio.audioName }}</a></p> -->
+        <p>download link: <a :href="audio.url" :download="audio.audioName">{{  audio.audioName }}</a></p>
       </li>
     </div>
   </div>
@@ -40,7 +41,7 @@
 <script setup>
 import {onMounted,reactive,ref} from "vue"
 import axios from 'axios';
-import {ref as storageRef, uploadBytes ,list} from 'firebase/storage'
+import {ref as storageRef, uploadBytes ,list,getDownloadURL,deleteObject } from 'firebase/storage'
 import {storage} from '@/firebase/firebase'
 
 const neptun = ref(sessionStorage.getItem("neptun"))
@@ -48,8 +49,6 @@ const filePath = "../../textdataset/data.txt"
 const textToRead = ref(null)
 var content = null
 var currentText = 0
-const saveState = ref('Save')
-const saveAudios = ref(null)
 const audioList = reactive([]);
 
 onMounted(() => {
@@ -70,14 +69,21 @@ const readText = ()=>{
 
 const ListSaveAudio = async () =>{
   const listRef = storageRef(storage, 'audio/'+neptun.value);
-  const audios = await list(listRef, { maxResults: 10 });
-
-  console.log(audios.items[0]._location)
-  // const fileName = filePath.split('/').pop();
-  // console.log('File Name:', fileName);
-
-  
-  
+  const audios = await list(listRef, { maxResults: 5 });
+  audios.items.forEach((itemRef)=>{
+    const audioName = (itemRef._location.path_).split('/').pop();
+    getDownloadURL(itemRef)
+    .then((url)=>{
+      audioList.unshift({
+        ref:itemRef,
+        url: url,
+        audioName: audioName,
+        disabled: true,
+        saveState: 'uploaded !',
+        deleteState: 'delete'
+      });
+    })
+  })  
 }
 
 const listMorePage = async (saveAudios) =>{
@@ -90,20 +96,20 @@ const listMorePage = async (saveAudios) =>{
   }
 }
 
-const saveRecord = (button) =>{
+const saveRecord = (audio) =>{
   let text = "Do you want to save the record to database!\nEnter OK to confirm";
   if (confirm(text) == true) {
-    button.disabled = true;
-    saveState.value = 'uploading...'
+    audio.disabled = true;
+    audio.saveState = 'uploading...'
     console.log(storage)
     const fileRef = storageRef(
       storage, 
-      'audio/'+neptun.value+'/'+button.audioName
+      'audio/'+neptun.value+'/'+audio.audioName
     );
-    uploadBytes(fileRef, button.blob)
+    uploadBytes(fileRef, audio.blob)
     .then((snapshot) => {
       console.log(snapshot)
-      saveState.value = 'uploaded !'
+      audio.saveState = 'uploaded !'
     });
 
     currentText=currentText+1
@@ -111,7 +117,19 @@ const saveRecord = (button) =>{
   }
   
 }
-
+const deleteRecord = (audio) =>{
+  let text = "Do you want to delete the record from database!\nEnter OK to confirm";
+  if (confirm(text) == true) {
+    audio.deleteState = 'deleting...'
+    deleteObject(audio.ref).then(()=>{
+      audio.deleteState = 'deleted'
+      const index = audioList.indexOf(audio);
+      if (index !== -1) {
+        audioList.splice(index, 1);
+      }
+    })
+  }
+}
 //webkitURL is deprecated but nevertheless
 URL = window.URL || window.webkitURL;
 
@@ -218,7 +236,10 @@ const createDownloadLink = (blob, encoding) => {
   audioList.unshift({
     url: url,
     audioName: audioName,
-    blob:blob
+    blob:blob,
+    saveState: 'save',
+    disabled:false,
+    deleteState:'delete'
   });
 };
 
@@ -232,7 +253,7 @@ const __log = (e, data) => {
   margin-left: 10px;
   padding: 25px;
   white-space: nowrap;
-
+  min-width: 93.85px;
 }
 .white-bold{
   font-weight:bold; 
