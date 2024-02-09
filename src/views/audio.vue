@@ -97,7 +97,6 @@ onMounted(() => {
 const readText = async () => {
   
   axios.get(filePath).then((res) => {
-    console.log(res.data);
     content = res.data;
     // make a hash to neptun ID so we can start word from begining or bottom of the list
     let hash = 0;
@@ -139,14 +138,14 @@ const ListSaveAudio = async () => {
   });
 };
 
-const listMorePage = async (saveAudios) => {
-  if (saveAudios.nextPageToken) {
-    const newAudio = await list(listRef, {
-      maxResults: 100,
-      pageToken: saveAudios.nextPageToken,
-    });
-  }
-};
+// const listMorePage = async (saveAudios) => {
+//   if (saveAudios.nextPageToken) {
+//     const newAudio = await list(listRef, {
+//       maxResults: 100,
+//       pageToken: saveAudios.nextPageToken,
+//     });
+//   }
+// };
 
 const saveRecord = (audio) => {
   // save new or replace
@@ -251,7 +250,7 @@ const startRecording = () => {
       //input.connect(audioContext.destination)
 
       recorder = new WebAudioRecorder(input, {
-        // workerDir: "/lib/",
+        workerDir: "public/lib/",
         encoding: encodingType,
         numChannels: 2,
         onEncoderLoading: async function (recorder, encoding) {},
