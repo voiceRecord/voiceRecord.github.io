@@ -1,36 +1,63 @@
 <template >
   <div class="center">
     <div style="max-width: 28em">
-      <div >
-        <h3>Welcomeback   <strong class="white-bold" >{{neptun}}</strong></h3>
+      <div>
+        <h3>
+          Welcomeback <strong class="white-bold">{{ neptun }}</strong>
+        </h3>
         <p>Read out the text below:</p>
-        <div class="center"><h1 style="font-size: 70px;">{{textToRead}}</h1></div>
+        <div class="center">
+          <h1 style="font-size: 70px">{{ textToRead }}</h1>
+        </div>
       </div>
-      <p v-if="stopButton">Click <strong class="white-bold" >Record</strong> button to start recording</p>
-      <p v-if="recordButton">Recording . . . </p>  
-      <p v-if="recordButton">Click <strong class="white-bold">Stop</strong> button to stop recording</p>
+      <p v-if="stopButton">
+        Click <strong class="white-bold">Record</strong> button to start
+        recording
+      </p>
+      <p v-if="recordButton">Recording . . .</p>
+      <p v-if="recordButton">
+        Click <strong class="white-bold">Stop</strong> button to stop recording
+      </p>
       <div id="controls">
         <button
           id="recordButton"
           @click="startRecording"
           :disabled="recordButton"
-          style="width: 200px; height: 40px;"
+          style="width: 200px; height: 40px"
         >
           Record
         </button>
-        <button id="stopButton" :disabled="stopButton" @click="stopRecording" style="width: 200px; height: 40px;">
+        <button
+          id="stopButton"
+          :disabled="stopButton"
+          @click="stopRecording"
+          style="width: 200px; height: 40px"
+        >
           Stop
         </button>
       </div>
-      <h2 style="margin-top: 20px;">Recorded {{ currentText }} words over {{ content.length }}</h2>
-      <h2 style="margin-top: 20px;">Recordings </h2>
+      <h2 style="margin-top: 20px">
+        Recorded {{ currentText }} words over {{ content.length }}
+      </h2>
+      <h2 style="margin-top: 20px">Recordings</h2>
       <ol id="recordingsList"></ol>
       <li v-for="audio in audioList" :key="audio">
         <div class="center">
           <audio :src="audio.url" controls></audio>
-          <button class="save" @click="saveRecord(audio)" :disabled="audio.disabled">{{ audio.saveState }}</button>
+          <button
+            class="save"
+            @click="saveRecord(audio)"
+            :disabled="audio.disabled"
+          >
+            {{ audio.saveState }}
+          </button>
         </div>
-        <p>download link: <a :href="audio.url" :download="audio.audioName">{{  audio.audioName }}</a></p>
+        <p>
+          download link:
+          <a :href="audio.url" :download="audio.audioName">{{
+            audio.audioName
+          }}</a>
+        </p>
       </li>
     </div>
   </div>
@@ -39,148 +66,153 @@
 
 <script setup>
 import router from "@/router";
-import {onMounted,reactive,ref} from "vue"
-import axios from 'axios';
-import {ref as storageRef, uploadBytes ,list,getDownloadURL,deleteObject} from 'firebase/storage'
-import {storage,db} from '@/firebase/firebase'
+import { onMounted, reactive, ref } from "vue";
+import axios from "axios";
+import {
+  ref as storageRef,
+  uploadBytes,
+  list,
+  getDownloadURL,
+  deleteObject,
+} from "firebase/storage";
+import { storage, db } from "@/firebase/firebase";
 import { doc, updateDoc } from "firebase/firestore";
+import filePath from "../assets/data.txt";
 
-const neptun = ref(sessionStorage.getItem("neptun"))
-const filePath = "../../textdataset/data.txt"
-const textToRead = ref(null)
-var content = reactive([])
-var currentText = 0 + parseInt(sessionStorage.getItem("textComplete"))
+const neptun = ref(sessionStorage.getItem("neptun"));
+const textToRead = ref(null);
+var content = reactive([]);
+var currentText = 0 + parseInt(sessionStorage.getItem("textComplete"));
 const audioList = reactive([]);
 
 onMounted(() => {
-  if(!neptun.value){
+  if (!neptun.value) {
     router.push("/");
+  } else {
+    readText();
+    ListSaveAudio();
   }
-  else{
-    readText()
-    ListSaveAudio()
-  }
-})
+});
 
-const readText = ()=>{
-  axios.get(filePath)
-  .then(res=>{
+const readText = async () => {
+  
+  axios.get(filePath).then((res) => {
+    console.log(res.data);
     content = res.data;
     // make a hash to neptun ID so we can start word from begining or bottom of the list
     let hash = 0;
-    let str = neptun
+    let str = neptun;
     for (let i = 0; i < str.length; i++) {
       const charCode = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + charCode; // Hashing algorithm
+      hash = (hash << 5) - hash + charCode; // Hashing algorithm
       hash |= 0; // Convert to 32-bit integer
     }
     //only take last digit
-    hash = Math.abs(hash)% 10;
+    hash = Math.abs(hash) % 10;
     //split the context string into object with multiple strings
-    content = content.split('\n')
-    if(hash%2==0){
+    content = content.split("\n");
+    if (hash % 2 == 0) {
       //read from bottom to top
-      content.reverse()
-      textToRead.value = content[currentText]
-    }else{
+      content.reverse();
+      textToRead.value = content[currentText];
+    } else {
       //read normally
-      textToRead.value = content[currentText]
+      textToRead.value = content[currentText];
     }
-  })
+  });
+};
 
-}
-
-const ListSaveAudio = async () =>{
-  const listRef = storageRef(storage, 'audio/'+neptun.value);
+const ListSaveAudio = async () => {
+  const listRef = storageRef(storage, "audio/" + neptun.value);
   const audios = await list(listRef, { maxResults: 5 });
-  audios.items.forEach((itemRef)=>{
-    const audioName = (itemRef._location.path_).split('/').pop();
-    getDownloadURL(itemRef)
-    .then((url)=>{
+  audios.items.forEach((itemRef) => {
+    const audioName = itemRef._location.path_.split("/").pop();
+    getDownloadURL(itemRef).then((url) => {
       audioList.unshift({
-        ref:itemRef,
+        ref: itemRef,
         url: url,
         audioName: audioName,
         disabled: true,
-        saveState: 'uploaded !',
+        saveState: "uploaded !",
       });
-    })
-  })  
-}
+    });
+  });
+};
 
-const listMorePage = async (saveAudios) =>{
-  if(saveAudios.nextPageToken){
+const listMorePage = async (saveAudios) => {
+  if (saveAudios.nextPageToken) {
     const newAudio = await list(listRef, {
       maxResults: 100,
       pageToken: saveAudios.nextPageToken,
     });
-    
   }
-}
+};
 
-const saveRecord = (audio) =>{
+const saveRecord = (audio) => {
   // save new or replace
-  if(audio.audioTextNumber==currentText){
-    let text = "Do you want to save the record to database!\nEnter OK to confirm";
+  if (audio.audioTextNumber == currentText) {
+    let text =
+      "Do you want to save the record to database!\nEnter OK to confirm";
     if (confirm(text) == true) {
       audio.disabled = true;
-      audio.saveState = 'uploading...'
+      audio.saveState = "uploading...";
       const fileRef = storageRef(
-        storage, 
-        'audio/'+neptun.value+'/'+audio.audioName
+        storage,
+        "audio/" + neptun.value + "/" + audio.audioName
       );
-      uploadBytes(fileRef, audio.blob)
-      .then((snapshot) => {
-        audio.ref = snapshot.ref
-        audio.saveState = 'uploaded !'
+      uploadBytes(fileRef, audio.blob).then((snapshot) => {
+        audio.ref = snapshot.ref;
+        audio.saveState = "uploaded !";
       });
-      if(currentText==content.length-1){
-        alert("you finish all the word! the next word will start over again")
-        currentText == 0
+      if (currentText == content.length - 1) {
+        alert("you finish all the word! the next word will start over again");
+        currentText == 0;
       }
-      currentText=currentText+1
-      sessionStorage.setItem("textComplete",currentText)
-      textToRead.value = content[currentText]
+      currentText = currentText + 1;
+      sessionStorage.setItem("textComplete", currentText);
+      textToRead.value = content[currentText];
       const userRef = doc(db, "user", neptun.value);
       updateDoc(userRef, {
-        textComplete: currentText
+        textComplete: currentText,
       });
     }
-  }
-  else{
-    let text = "You already upload audio for the word "+audio.text+"\nDo you want to replace it?\nEnter OK to confirm";
+  } else {
+    let text =
+      "You already upload audio for the word " +
+      audio.text +
+      "\nDo you want to replace it?\nEnter OK to confirm";
     if (confirm(text) == true) {
       //upload the audio
       audio.disabled = true;
-      audio.saveState = 'uploading...'
+      audio.saveState = "uploading...";
       const fileRef = storageRef(
-        storage, 
-        'audio/'+neptun.value+'/'+audio.audioName
+        storage,
+        "audio/" + neptun.value + "/" + audio.audioName
       );
-      uploadBytes(fileRef, audio.blob)
-      .then((snapshot) => {
-        audio.ref = snapshot.ref
-        audio.saveState = 'uploaded !'
+      uploadBytes(fileRef, audio.blob).then((snapshot) => {
+        audio.ref = snapshot.ref;
+        audio.saveState = "uploaded !";
       });
-      
+
       //get the uploaded audio and delete it from both local and server
-      for(let i = 0; i<audioList.length;i++){
-        let item = audioList[i]
-        if(item.audioName.includes(audio.text.trim())&& item.saveState=="uploaded !"){
-          deleteObject(item.ref).then(()=>{
+      for (let i = 0; i < audioList.length; i++) {
+        let item = audioList[i];
+        if (
+          item.audioName.includes(audio.text.trim()) &&
+          item.saveState == "uploaded !"
+        ) {
+          deleteObject(item.ref).then(() => {
             const index = audioList.indexOf(item);
             if (index !== -1) {
               audioList.splice(index, 1);
             }
-          })
-          break
+          });
+          break;
         }
       }
     }
   }
-  
-}
-
+};
 
 //webkitURL is deprecated but nevertheless
 URL = window.URL || window.webkitURL;
@@ -208,7 +240,6 @@ const startRecording = () => {
   navigator.mediaDevices
     .getUserMedia(constraints)
     .then(function (stream) {
-
       //assign to gumStream for later use
       gumStream = stream;
       // when to encode
@@ -223,10 +254,8 @@ const startRecording = () => {
         // workerDir: "/lib/",
         encoding: encodingType,
         numChannels: 2,
-        onEncoderLoading: async function (recorder, encoding) {
-        },
-        onEncoderLoaded: async function (recorder, encoding) {
-        },
+        onEncoderLoading: async function (recorder, encoding) {},
+        onEncoderLoaded: async function (recorder, encoding) {},
       });
 
       recorder.onComplete = function (recorder, blob) {
@@ -266,35 +295,40 @@ const stopRecording = () => {
 
   //tell the recorder to finish the recording (stop recording + encode the recorded audio)
   recorder.finishRecording();
-
 };
 
 const createDownloadLink = (blob, encoding) => {
   var url = URL.createObjectURL(blob);
-  var audioName = (neptun.value + "_" + textToRead.value + "_"+ new Date().valueOf() + ".").replace(/\s/g, "") + encoding;
+  var audioName =
+    (
+      neptun.value +
+      "_" +
+      textToRead.value +
+      "_" +
+      new Date().valueOf() +
+      "."
+    ).replace(/\s/g, "") + encoding;
   audioList.unshift({
-    text:textToRead.value,
+    text: textToRead.value,
     url: url,
     audioName: audioName,
-    blob:blob,
-    saveState: 'save',
-    disabled:false,
-    audioTextNumber:currentText
+    blob: blob,
+    saveState: "save",
+    disabled: false,
+    audioTextNumber: currentText,
   });
 };
-
-
 </script>
 <style scoped>
-.save{
+.save {
   margin-left: 10px;
   padding: 25px;
   white-space: nowrap;
   min-width: 93.85px;
 }
-.white-bold{
-  font-weight:bold; 
-  font-size:20px;
+.white-bold {
+  font-weight: bold;
+  font-size: 20px;
   color: white;
 }
 p {

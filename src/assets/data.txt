@@ -1,0 +1,159 @@
+acer  (ácer)
+aesculus  (észkulusz)
+ailanthus  (ajilantusz)
+alnus  (álnusz)
+ambrosia  (ambrózia)
+artemisia  (artemízia)
+asteraceae  (aszterácejé)
+betula  (betula)
+cannabaceae  (kannabácejé)
+carpinus  (karpínusz)
+castanea  (kasztanye)
+chenopodiaceae  (kenopodiácejé)
+corylus  (korilusz)
+cupressaceae  (kupresszácejé)
+taxaceae  (taxácejé)
+fabaceae  (fabácejé)
+gleditsia  (gledícia)
+robinia  (robínia)
+sophora  (szofóra)
+amorpha  (amorfa)
+fagus  (fágusz)
+fraxinus  (fraxínusz)
+juglans  (juglansz)
+moraceae  (morácejé)
+oleaceae  (oleácejé)
+pinaceae  (pínácejé)
+plantago  (plantágó)
+platanus  (platánusz)
+poaceae  (poácejé)
+populus  (populusz)
+quercus  (kverkusz)
+rumex  (rumex)
+salix  (szalix)
+sambucus  (szambúkusz)
+tilia  (tília)
+ulmus  (úlmusz)
+umbelliferae  (umbelliferé)
+urticaceae  (úrtikácejé)
+celtis  (celtisz)
+cyperaceae  (ciperácejé)
+typha  (tifa)
+xanthium  (xantium)
+iva  (iva)
+ostrya  (osztrija)
+ginkgo  (ginkó)
+europaea  (európea)
+egyéb
+ismeretlen
+aesc  (észk)
+ail  (ail)
+aln  (aln)
+amb  (amb)
+art  (art)
+aster  (aszter)
+bet  (bet)
+canna  (kanna)
+carp  (karp)
+cast  (kaszt)
+cheno  (kenó)
+cory  (kori)
+cup  (kup)
+tax  (tax)
+faba  (faba)
+fag  (fág)
+frax  (frax)
+jug  (jug)
+mor  (mór)
+morus  (mórusz)
+olea  (olea)
+pin  (pín)
+plant  (plant)
+plat  (plat)
+poa  (poa)
+pop  (pop)
+quer  (kver)
+rum  (rum)
+sal  (szal)
+samb  (szamb)
+tilia  (tília)
+ulm  (úlm)
+umb  (úmb)
+umbi  (úmbi)
+urt  (úrt)
+urti  (úrti)
+celt  (celt)
+cyp  (cip)
+typha  (tifa)
+xant  (xant)
+iva  (iva)
+ostrya  (osztrija)
+nulla
+egy
+két
+kettő
+három
+négy
+öt
+hat
+hét
+nyolc
+kilenc
+tíz
+tizen
+huszon
+harminc
+negyven
+ötven
+hatvan
+hetven
+nyolcvan
+kilencven
+száz
+január
+február
+március
+április
+május
+június
+július
+augusztus
+szeptember
+október
+november
+december
+Békéscsaba
+Budapest
+Debrecen
+Eger
+Győr
+Kaposvár
+Kecskemét
+Miskolc
+Nyíregyháza
+Pécs
+Salgótarján
+Siófok
+Szeged
+Székesfehérvár
+Szekszárd
+Szolnok
+Szombathely
+Tatabánya
+Veszprém
+Zalaegerszeg
+start
+kezdés
+leállítás
+plusz
+még
+mínusz
+hiba
+egyes
+kettes
+hármas
+négyes
+ötös
+index
+stop
+vége
