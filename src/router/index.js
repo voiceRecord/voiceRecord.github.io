@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 import login from '../views/login.vue'
-import admin from '../views/admin.vue'
 import audio from '../views/audio.vue'
 
 const router = createRouter({
@@ -11,11 +10,6 @@ const router = createRouter({
       path: '/',
       name: 'login',
       component: login
-    },
-    {
-      path: '/admin',
-      name: 'admin',
-      component: admin
     },
     {
       path:'/audio',

@@ -6,9 +6,7 @@
           Welcomeback <strong class="white-bold">{{ neptun }}</strong>
         </h3>
         <p>Read out the text below:</p>
-        <div class="center">
-          <h1 style="font-size: 70px">{{ textToRead }}</h1>
-        </div>
+        <h1 class="textToRead">{{ textToRead }}</h1>
       </div>
       <p v-if="stopButton">
         Click <strong class="white-bold">Record</strong> button to start
@@ -53,12 +51,19 @@
           </button>
         </div>
         <p>
-          download link:
-          <a :href="audio.url" :download="audio.audioName">{{
-            audio.audioName
-          }}</a>
+          {{ audio.audioName }}
         </p>
       </li>
+      <div class="center">
+        <button
+          class="list-more"
+          v-if="nextPageToken"
+          @click="listMoreAudio"
+          :disabled="disloadmore"
+        >
+          list more records
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -79,11 +84,14 @@ import { storage, db } from "@/firebase/firebase";
 import { doc, updateDoc } from "firebase/firestore";
 import filePath from "../assets/data.txt";
 
+const id = parseInt(sessionStorage.getItem("id"));
 const neptun = ref(sessionStorage.getItem("neptun"));
 const textToRead = ref(null);
 var content = reactive([]);
 var currentText = 0 + parseInt(sessionStorage.getItem("textComplete"));
 const audioList = reactive([]);
+var nextPageToken = null;
+var disloadmore = false; //disbale load more button
 
 onMounted(() => {
   if (!neptun.value) {
@@ -95,22 +103,12 @@ onMounted(() => {
 });
 
 const readText = async () => {
-  
   axios.get(filePath).then((res) => {
     content = res.data;
-    // make a hash to neptun ID so we can start word from begining or bottom of the list
-    let hash = 0;
-    let str = neptun;
-    for (let i = 0; i < str.length; i++) {
-      const charCode = str.charCodeAt(i);
-      hash = (hash << 5) - hash + charCode; // Hashing algorithm
-      hash |= 0; // Convert to 32-bit integer
-    }
-    //only take last digit
-    hash = Math.abs(hash) % 10;
     //split the context string into object with multiple strings
     content = content.split("\n");
-    if (hash % 2 == 0) {
+
+    if (id % 2 == 0) {
       //read from bottom to top
       content.reverse();
       textToRead.value = content[currentText];
@@ -124,6 +122,7 @@ const readText = async () => {
 const ListSaveAudio = async () => {
   const listRef = storageRef(storage, "audio/" + neptun.value);
   const audios = await list(listRef, { maxResults: 5 });
+  if (audios.nextPageToken) nextPageToken = audios.nextPageToken;
   audios.items.forEach((itemRef) => {
     const audioName = itemRef._location.path_.split("/").pop();
     getDownloadURL(itemRef).then((url) => {
@@ -138,14 +137,29 @@ const ListSaveAudio = async () => {
   });
 };
 
-// const listMorePage = async (saveAudios) => {
-//   if (saveAudios.nextPageToken) {
-//     const newAudio = await list(listRef, {
-//       maxResults: 100,
-//       pageToken: saveAudios.nextPageToken,
-//     });
-//   }
-// };
+const listMoreAudio = async () => {
+  disloadmore = true;
+  const listRef = storageRef(storage, "audio/" + neptun.value);
+  const audios = await list(listRef, {
+    maxResults: 5,
+    pageToken: nextPageToken,
+  });
+  nextPageToken = null;
+  if (audios.nextPageToken) nextPageToken = audios.nextPageToken;
+  audios.items.forEach((itemRef) => {
+    const audioName = itemRef._location.path_.split("/").pop();
+    getDownloadURL(itemRef).then((url) => {
+      audioList.push({
+        ref: itemRef,
+        url: url,
+        audioName: audioName,
+        disabled: true,
+        saveState: "uploaded !",
+      });
+    });
+  });
+  disloadmore = false;
+};
 
 const saveRecord = (audio) => {
   // save new or replace
@@ -170,7 +184,11 @@ const saveRecord = (audio) => {
       currentText = currentText + 1;
       sessionStorage.setItem("textComplete", currentText);
       textToRead.value = content[currentText];
-      const userRef = doc(db, "user", neptun.value);
+      console.log(id.toString());
+      const userRef = doc(db, "user", id.toString());
+
+      console.log(currentText);
+
       updateDoc(userRef, {
         textComplete: currentText,
       });
@@ -227,8 +245,6 @@ var encodingType = "wav";
 var encodeAfterRecord = true;
 
 const startRecording = () => {
-  console.log("startRecording() called");
-
   // We'll us a simple constraints object, for more advanced features see https://blog.addpipe.com/audio-constraints-getusermedia/
   var constraints = {
     audio: true,
@@ -320,7 +336,7 @@ const createDownloadLink = (blob, encoding) => {
 </script>
 <style scoped>
 .save {
-  margin-left: 10px;
+  margin-left: 25px;
   padding: 25px;
   white-space: nowrap;
   min-width: 93.85px;
@@ -399,5 +415,14 @@ audio {
 li {
   list-style: none;
   margin-bottom: 1rem;
+}
+.list-more {
+  height: 55px;
+  max-width: 155px;
+}
+.textToRead {
+  font-size: 60px;
+  display: grid;
+  text-align: center;
 }
 </style>

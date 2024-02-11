@@ -40,7 +40,9 @@ const login = async () => {
       wrongpassword.value = true;
     } else {
       const user = res.docs[0].data();
+      
       sessionStorage.setItem('neptun',user.neptun);//auto clear when close browser
+      sessionStorage.setItem('id',res.docs[0].id);
       if(user.textComplete){
         sessionStorage.setItem('textComplete',user.textComplete);
       }
