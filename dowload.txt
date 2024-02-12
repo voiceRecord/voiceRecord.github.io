@@ -1,0 +1,10 @@
+step 1: open google cloud cli or download here:
+
+https://cloud.google.com/sdk/docs/install?authuser=5
+
+step 2: login and choose the voice recording project
+
+step 3: cd to the location we want to store the file
+
+step 4: run the cmd
+gsutil -m cp -r  "gs://voice-recording-1fc90.appspot.com/audio" "Desktop/"
