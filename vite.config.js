@@ -13,10 +13,4 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }
   },
-  server: {
-    // Configure Vite to serve index.html for all routes
-    fs: {
-      strict: false
-    }
-  }
 })
